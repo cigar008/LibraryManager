@@ -25,10 +25,6 @@ namespace TelegramLibrary.Modules
         /// </summary>
         public string title { get; set; }
         /// <summary>
-        /// false = 被踢出群組，true = 被加入群組
-        /// </summary>
-        public bool all_members_are_administrators { get; set; }
-        /// <summary>
         /// 類型 個人或公開
         /// </summary>
         public string type { get; set; }

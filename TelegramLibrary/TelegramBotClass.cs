@@ -11,7 +11,7 @@ using TelegramLibrary.Modules;
 
 namespace TelegramLibrary
 {
-    public class TelegramBotClass :IDisposable
+    public class TelegramBotClass : IDisposable
     {
         /// <summary>
         /// Telegram初始化(所有上傳檔案都有容量限制，請依照Telegram官網為準)
@@ -45,11 +45,6 @@ namespace TelegramLibrary
         /// 機器人 傳送訊息ID (群組 = 有負號， 個人 = 沒有負號)
         /// </summary>
         public string Chat_ID { get; set; }
-
-        /// <summary>
-        /// Telegram取到的ID(group = 群組， Private = 個人)
-        /// </summary>
-        public List<GetUpDate> GetUpDates = new List<GetUpDate>();
         /// <summary>
         /// 群組名稱
         /// </summary>
@@ -63,24 +58,33 @@ namespace TelegramLibrary
         /// <summary>
         /// 搜尋Telegram機器人被加入的 群組或個人ID
         /// </summary>
-        public void Serch_TelegramID()
+        public List<GetUpDate> Serch_TelegramID()
         {
+            List<GetUpDate> GetUpDates = null;
             try
             {
-                var client = new RestClient($"https://api.telegram.org/bot{Telegram_HTTP_API}/getUpdates?");
+                var client = new RestClient("https://api.telegram.org/bot" + Telegram_HTTP_API + "/getUpdates?");
                 client.Timeout = -1;
                 var request = new RestRequest(Method.GET);
                 request.AlwaysMultipartFormData = true;
                 IRestResponse response = client.Execute(request);
+                GetUpDates = new List<GetUpDate>();
                 JObject jsondatas = JsonConvert.DeserializeObject<JObject>(response.Content);
                 for (int Index = 0; Index < jsondatas["result"].Count(); Index++)
                 {
                     JObject jsondata = JsonConvert.DeserializeObject<JObject>(jsondatas["result"][Index].ToString());
-                    GetUpDate getUpdate = JsonConvert.DeserializeObject<GetUpDate>(jsondata["message"]["chat"].ToString());
-                    GetUpDates.Add(getUpdate);
+                    if (jsondata["message"] != null)
+                    {
+                        GetUpDate getUpdate = JsonConvert.DeserializeObject<GetUpDate>($"{jsondata["message"]["chat"]}");
+                        if (!GetUpDates.Exists(g => g.id == getUpdate.id))
+                        {
+                            GetUpDates.Add(getUpdate);
+                        }
+                    }
                 }
+                return GetUpDates;
             }
-            catch (Exception ex) { Log.Error(ex, $"Telegram機器人 API網址錯誤 API網址: {Telegram_HTTP_API}"); }
+            catch (Exception ex) { Log.Error(ex, $"Telegram機器人 API網址錯誤 API網址: {Telegram_HTTP_API}"); return GetUpDates; }
         }
         #endregion
 
@@ -102,7 +106,7 @@ namespace TelegramLibrary
         {
             try
             {
-                var client = new RestClient("https://api.telegram.org/bot"+Telegram_HTTP_API+"/sendMessage?");
+                var client = new RestClient("https://api.telegram.org/bot" + Telegram_HTTP_API + "/sendMessage?");
                 client.Timeout = -1;
                 var request = new RestRequest(Method.POST);
                 request.AlwaysMultipartFormData = true;
